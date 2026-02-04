@@ -2,8 +2,8 @@
 #include <assert.h>
 #include "ring_buffer.h"
 
-extern int get_count(dma_info_t *y);
-extern int advance(dma_info_t *z, uint8_t a);
+extern int get_count(dma_info_t *dma);
+extern int advance(dma_info_t *dma, uint32_t len);
 
 int main(void)
 {
