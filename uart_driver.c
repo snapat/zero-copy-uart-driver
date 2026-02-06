@@ -39,7 +39,7 @@ uint32_t uart_data_available(void)
   return get_count(&uart_dma);
 }
 
-void uart_read_byte(void)
+uint8_t uart_read_byte(void)
 {
   if (uart_data_available() == 0)
   {
@@ -50,7 +50,7 @@ void uart_read_byte(void)
   return data;
 }
 
-uint8_t uart_read_byte(int8_t byte)
+uint8_t uart_write_byte(int8_t byte)
 {
   while (!(USART2_SR & (1 << 7)))
     ; // Wait until Transmit Data Register Empty, set by hardware
