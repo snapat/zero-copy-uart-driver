@@ -21,10 +21,9 @@
 
 #define USART2_DR_ADDR (USART2_PERIPH_ADDR + 0x04)
 #define USART2_CR1 *((volatile uint32_t *)(USART2_PERIPH_ADDR + 0x0C))
-
 #define USART2_BRR *((volatile uint32_t *)(USART2_PERIPH_ADDR + 0x08))
-
 #define USART2_CR3 *((volatile uint32_t *)(USART2_PERIPH_ADDR + 0x14))
+#define USART2_SR *((volatile uint32_t *)(USART2_PERIPH_ADDR + 0x00))
 
 static uint8_t rx_buffer[UART_BUFFER_SIZE];
 
@@ -33,6 +32,34 @@ dma_info_t uart_dma = {
     .size = UART_BUFFER_SIZE,
     .head = 0,
     .tail = 0};
+
+uint32_t uart_data_available(void)
+{
+  uart_dma.head = UART_BUFFER_SIZE - DMA1_S5NDTR;
+  return get_count(&uart_dma);
+}
+
+void uart_read_byte(void)
+{
+  if (uart_data_available() == 0)
+  {
+    return 0;
+  }
+  uint8_t data = uart_dma.buffer[uart_dma.tail]; // Save current byte where tail is to byte sized data variable
+  advance(&uart_dma, 1);                         // Move tail to the next byte
+  return data;
+}
+
+uint8_t uart_read_byte(int8_t byte)
+{
+  while (!(USART2_SR & (1 << 7)))
+    ; // Wait until Transmit Data Register Empty, set by hardware
+  *((volatile uint32_t *)(USART2_DR_ADDR)) = byte;
+  while (!(USART2_SR & (1 << 6)))
+    ;
+  // Wait until Transmit Complete Bit is High, set by hardware
+  return byte;
+}
 
 void uart_init(void)
 {
@@ -68,7 +95,14 @@ void uart_init(void)
   USART2_BRR = (0x8A << 4) | (0xE << 0);
   USART2_CR3 = (1 << 6);
 
-  // Clear and enable UART after configuring, otherwise it will lead to it initially having the wrong settings
+  // Clear and enable UART after configuring, otherwise it will run with a period of initial wrong settings
   USART2_CR1 = (uint32_t)(0);
   USART2_CR1 = (1 << 13) | (1 << 2) | (1 << 3);
+
+  // --- Configure PA2 (TX) ---
+  // 1. Set PA2 to Alternate Function Mode (Bits 5:4)
+  GPIOA_MODER_ADDR |= (2 << 4);
+
+  // 2. Set PA2 to AF7 (USART2) (Bits 11:8)
+  GPIOA_AFRL |= (7 << 8);
 }

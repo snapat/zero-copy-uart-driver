@@ -1,34 +1,33 @@
 #include <stdio.h>
 #include <assert.h>
 #include "ring_buffer.h"
+#include "uart_driver.h"
 
 extern int get_count(dma_info_t *dma);
 extern int advance(dma_info_t *dma, uint32_t len);
 
+volatile uint8_t received_data = 0;
+volatile uint32_t bytes_processed = 0;
+
 int main(void)
 {
-  const int size1 = 10;
-  uint8_t memory[size1];
-
-  dma_info_t dma = {
-      .buffer = memory,
-      .size = size1,
-      .head = 5,
-      .tail = 0};
-
-  int count_test = get_count(&dma);
-  printf("Before Advance Count Test: %i\n", count_test);
-  assert(count_test == 5);
-
-  advance(&dma, 2);
-  printf("After Advance, tail = %i\n", dma.tail);
-  assert(dma.tail == 2);
-
-  dma.tail = 8;
-  dma.head = 1;
-  assert(get_count(&dma) == 3);
-  if (get_count(&dma) == 3)
+  uart_init();
+  uint8_t tx_byte = 'A';
+  while (1)
   {
-    printf("Wrap-around condition passed");
+    UART_write_byte(tx_byte);
+    tx_byte++;
+    if (tx_byte > 'Z')
+    {
+      tx_byte = 'A';
+    }
+
+    if (uart_data_available > 0)
+    {
+      received_data = uart_read_byte();
+      bytes_processed++;
+    }
+    for (volatile int i = 0; i < 4000000; i++)
+      ;
   }
 };
