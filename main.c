@@ -11,10 +11,10 @@ int main(void)
   uint8_t memory[size1];
 
   dma_info_t dma = {
-      dma.buffer = memory,
-      dma.size = size1,
-      dma.head = 5,
-      dma.tail = 0};
+      .buffer = memory,
+      .size = size1,
+      .head = 5,
+      .tail = 0};
 
   int count_test = get_count(&dma);
   printf("Before Advance Count Test: %i\n", count_test);
