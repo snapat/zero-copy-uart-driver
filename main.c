@@ -22,7 +22,7 @@ int main(void)
       tx_byte = 'A';
     }
 
-    if (uart_data_available > 0)
+    if (uart_data_available() > 0)
     {
       received_data = uart_read_byte();
       bytes_processed++;
